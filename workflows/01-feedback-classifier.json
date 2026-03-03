@@ -1,0 +1,82 @@
+{
+  "name": "01 — Feedback Classifier",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Customer Feedback",
+        "formDescription": "Share your experience with us",
+        "formFields": {
+          "values": [
+            { "fieldLabel": "Name", "fieldType": "text", "requiredField": true },
+            { "fieldLabel": "Email", "fieldType": "email", "requiredField": true },
+            { "fieldLabel": "Contact Number", "fieldType": "text" },
+            { "fieldLabel": "Feedback", "fieldType": "textarea", "requiredField": true }
+          ]
+        },
+        "options": {}
+      },
+      "id": "form-trigger",
+      "name": "Feedback Form",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "agent": "conversationalAgent",
+        "promptType": "define",
+        "text": "=Classify the following customer feedback into EXACTLY one of these categories:\n- complaint\n- appreciation\n- feature_request\n\nFeedback from {{ $json.Name }} ({{ $json.Email }}):\n\"{{ $json.Feedback }}\"\n\nRespond with a JSON object only:\n{\n  \"category\": \"<complaint|appreciation|feature_request>\",\n  \"confidence\": \"<high|medium|low>\",\n  \"summary\": \"<one sentence summary>\"\n}",
+        "options": {
+          "systemMessage": "You are a customer feedback classifier. Always respond with valid JSON only, no extra text."
+        }
+      },
+      "id": "ai-agent",
+      "name": "Classify Feedback",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const output = $input.first().json.output;\nconst parsed = JSON.parse(output);\nreturn [{ json: { ...parsed, name: $('Feedback Form').first().json.Name, email: $('Feedback Form').first().json.Email, originalFeedback: $('Feedback Form').first().json.Feedback } }];"
+      },
+      "id": "parse-output",
+      "name": "Parse Classification",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [{ "value1": "={{ $json.category }}", "value2": "complaint" }]
+        }
+      },
+      "id": "router",
+      "name": "Route by Category",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ status: 'received', category: $json.category, message: 'Thank you for your feedback!' }) }}"
+      },
+      "id": "respond",
+      "name": "Send Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1120, 300]
+    }
+  ],
+  "connections": {
+    "Feedback Form": { "main": [[{ "node": "Classify Feedback", "type": "main", "index": 0 }]] },
+    "Classify Feedback": { "main": [[{ "node": "Parse Classification", "type": "main", "index": 0 }]] },
+    "Parse Classification": { "main": [[{ "node": "Route by Category", "type": "main", "index": 0 }]] },
+    "Route by Category": { "main": [[{ "node": "Send Response", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "AI Agent" }, { "name": "Classification" }]
+}

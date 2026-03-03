@@ -1,0 +1,68 @@
+{
+  "name": "02 — Webhook Chatbot",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "chat",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook",
+      "name": "Chat Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "chat-endpoint"
+    },
+    {
+      "parameters": {
+        "agent": "conversationalAgent",
+        "promptType": "define",
+        "text": "={{ $json.body.message }}",
+        "options": {
+          "systemMessage": "You are a helpful AI assistant. Answer concisely and helpfully."
+        }
+      },
+      "id": "ai-agent",
+      "name": "Generate Reply",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "model": "llama3-70b-8192",
+        "options": {
+          "temperature": 0.7,
+          "maxTokens": 1024
+        }
+      },
+      "id": "groq-model",
+      "name": "Groq LLaMA 3 70B",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [460, 480],
+      "credentials": { "groqApi": { "id": "groq-creds", "name": "Groq API" } }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ reply: $json.output, model: 'llama3-70b', timestamp: new Date().toISOString() }) }}"
+      },
+      "id": "respond",
+      "name": "Send Reply",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [680, 300]
+    }
+  ],
+  "connections": {
+    "Chat Webhook": { "main": [[{ "node": "Generate Reply", "type": "main", "index": 0 }]] },
+    "Groq LLaMA 3 70B": { "ai_languageModel": [[{ "node": "Generate Reply", "type": "ai_languageModel", "index": 0 }]] },
+    "Generate Reply": { "main": [[{ "node": "Send Reply", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "Chatbot" }, { "name": "Groq" }, { "name": "Webhook" }]
+}

@@ -1,0 +1,64 @@
+version: "3.8"
+
+services:
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n-ai-agent-lab
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      # ─── Core ───────────────────────────────────────────
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=http://localhost:5678/
+
+      # ─── Auth (change these!) ────────────────────────────
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=admin
+      - N8N_BASIC_AUTH_PASSWORD=changeme123
+
+      # ─── Encryption key (generate a random 32-char string) ─
+      - N8N_ENCRYPTION_KEY=your-super-secret-encryption-key-32
+
+      # ─── Timezone ────────────────────────────────────────
+      - GENERIC_TIMEZONE=America/New_York
+      - TZ=America/New_York
+
+      # ─── AI Model API Keys ───────────────────────────────
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+
+      # ─── Execution settings ──────────────────────────────
+      - EXECUTIONS_DATA_SAVE_ON_ERROR=all
+      - EXECUTIONS_DATA_SAVE_ON_SUCCESS=all
+      - EXECUTIONS_DATA_MAX_AGE=168        # keep 7 days of logs
+
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./workflows:/home/node/.n8n/workflows   # auto-import JSONs
+      - ./files:/files                           # shared file storage
+
+    networks:
+      - n8n_net
+
+  # ─── Optional: Postgres (swap SQLite for production) ────
+  # postgres:
+  #   image: postgres:15-alpine
+  #   environment:
+  #     POSTGRES_USER: n8n
+  #     POSTGRES_PASSWORD: n8n
+  #     POSTGRES_DB: n8n
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   networks:
+  #     - n8n_net
+
+volumes:
+  n8n_data:
+  # postgres_data:
+
+networks:
+  n8n_net:
+    driver: bridge

@@ -1,0 +1,96 @@
+{
+  "name": "03 — Email Reply Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "hours", "hoursInterval": 5 }] }
+      },
+      "id": "schedule",
+      "name": "Every 5 Hours",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 10,
+        "filters": { "q": "is:unread label:inbox -label:replied" },
+        "options": { "format": "resolved" }
+      },
+      "id": "get-emails",
+      "name": "Get Unread Emails",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [460, 300],
+      "credentials": { "gmailOAuth2": { "id": "gmail-creds", "name": "Gmail OAuth2" } }
+    },
+    {
+      "parameters": {
+        "agent": "conversationalAgent",
+        "promptType": "define",
+        "text": "=You received an email. Analyze it and write a professional, personalized reply.\n\nFrom: {{ $json.from }}\nSubject: {{ $json.subject }}\nBody:\n{{ $json.text }}\n\nRespond with JSON:\n{\n  \"emailType\": \"<offer|advertisement|order|inquiry|other>\",\n  \"replySubject\": \"Re: {{ $json.subject }}\",\n  \"replyBody\": \"<your professional reply here>\"\n}",
+        "options": {
+          "systemMessage": "You are a professional email assistant. Write clear, polite, and contextually appropriate email replies. Always respond with valid JSON only."
+        }
+      },
+      "id": "ai-agent",
+      "name": "Craft Email Reply",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "options": { "temperature": 0.5 }
+      },
+      "id": "openai-model",
+      "name": "GPT-4o-mini",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [680, 480],
+      "credentials": { "openAiApi": { "id": "openai-creds", "name": "OpenAI API" } }
+    },
+    {
+      "parameters": {
+        "jsCode": "const output = $input.first().json.output;\nconst parsed = JSON.parse(output);\nreturn [{ json: { ...parsed, threadId: $('Get Unread Emails').first().json.threadId, messageId: $('Get Unread Emails').first().json.id } }];"
+      },
+      "id": "parse",
+      "name": "Parse Reply",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "reply",
+        "messageId": "={{ $json.messageId }}",
+        "message": "={{ $json.replyBody }}",
+        "options": {
+          "sendReply": true,
+          "threadId": "={{ $json.threadId }}"
+        }
+      },
+      "id": "send-reply",
+      "name": "Send Reply",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [1120, 300],
+      "credentials": { "gmailOAuth2": { "id": "gmail-creds", "name": "Gmail OAuth2" } }
+    }
+  ],
+  "connections": {
+    "Every 5 Hours": { "main": [[{ "node": "Get Unread Emails", "type": "main", "index": 0 }]] },
+    "Get Unread Emails": { "main": [[{ "node": "Craft Email Reply", "type": "main", "index": 0 }]] },
+    "GPT-4o-mini": { "ai_languageModel": [[{ "node": "Craft Email Reply", "type": "ai_languageModel", "index": 0 }]] },
+    "Craft Email Reply": { "main": [[{ "node": "Parse Reply", "type": "main", "index": 0 }]] },
+    "Parse Reply": { "main": [[{ "node": "Send Reply", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "Email" }, { "name": "AI Agent" }, { "name": "Gmail" }]
+}

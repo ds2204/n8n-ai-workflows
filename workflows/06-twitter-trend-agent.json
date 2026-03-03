@@ -1,0 +1,87 @@
+{
+  "name": "06 — Twitter Trend Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "chat-trigger",
+      "name": "Chat Interface",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "twitter-trends"
+    },
+    {
+      "parameters": {
+        "agent": "toolsAgent",
+        "options": {
+          "systemMessage": "You are a social media analyst. When asked about Twitter trends, use the search_twitter tool to find relevant tweets. Analyze the results and provide insights about the trending topic, key discussions, and sentiment."
+        }
+      },
+      "id": "agent",
+      "name": "Trend Analyst Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "options": { "temperature": 0.4 }
+      },
+      "id": "openai-model",
+      "name": "GPT-4o-mini",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [460, 480],
+      "credentials": { "openAiApi": { "id": "openai-creds", "name": "OpenAI API" } }
+    },
+    {
+      "parameters": {
+        "name": "search_twitter",
+        "description": "Search Twitter/X for tweets about a specific topic or trend. Input should be a search query string.",
+        "workflowId": "={{ $workflow.id }}",
+        "fields": {
+          "values": [
+            { "name": "query", "type": "string", "description": "The search query" },
+            { "name": "max_results", "type": "number", "description": "Max tweets to return (10-100)" }
+          ]
+        }
+      },
+      "id": "twitter-tool",
+      "name": "Twitter Search Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1,
+      "position": [680, 480]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "operation": "search",
+        "searchText": "={{ $json.query }}",
+        "returnAll": false,
+        "limit": "={{ $json.max_results || 20 }}",
+        "options": {
+          "tweetFields": ["created_at", "public_metrics", "author_id"],
+          "expansions": ["author_id"],
+          "sortOrder": "relevancy"
+        }
+      },
+      "id": "twitter-search",
+      "name": "Twitter API Search",
+      "type": "n8n-nodes-base.twitter",
+      "typeVersion": 2,
+      "position": [900, 300],
+      "credentials": { "twitterOAuth2Api": { "id": "twitter-creds", "name": "Twitter OAuth2" } }
+    }
+  ],
+  "connections": {
+    "Chat Interface": { "main": [[{ "node": "Trend Analyst Agent", "type": "main", "index": 0 }]] },
+    "GPT-4o-mini": { "ai_languageModel": [[{ "node": "Trend Analyst Agent", "type": "ai_languageModel", "index": 0 }]] },
+    "Twitter Search Tool": { "ai_tool": [[{ "node": "Trend Analyst Agent", "type": "ai_tool", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "Twitter" }, { "name": "AI Agent" }, { "name": "Social Media" }]
+}
