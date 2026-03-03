@@ -71,6 +71,7 @@ Automatically categorizes customer feedback into **complaint**, **appreciation**
 ```
 Feedback Form → Classify Feedback (GPT-4o-mini) → Parse Classification → Route by Category → Send Response
 ```
+<img width="1110" height="518" alt="image" src="https://github.com/user-attachments/assets/cd6d8c17-fbd2-4fac-b9cf-51a9d11658cb" />
 
 **Key nodes:** Form Trigger · AI Agent · Code (JSON parser) · IF Router · Respond to Webhook
 
@@ -81,6 +82,7 @@ Feedback Form → Classify Feedback (GPT-4o-mini) → Parse Classification → R
 4. Response returns: `{"status":"received","category":"appreciation","message":"Thank you for your feedback!"}`
 
 ---
+<img width="526" height="163" alt="image" src="https://github.com/user-attachments/assets/915ed5a2-9ab1-486b-896b-33ded12715fa" />
 
 ### 2. Webhook Chatbot
 
@@ -90,6 +92,7 @@ A REST API chatbot powered by **Groq LLaMA 3 70B**. Send a POST request, get an 
 ```
 Chat Webhook (POST) → Generate Reply (Groq LLaMA 3 70B) → Send Reply
 ```
+<img width="984" height="443" alt="image" src="https://github.com/user-attachments/assets/88755477-1c20-47ab-aafd-cfd9ea67dbef" />
 
 **Key nodes:** Webhook · AI Agent · Groq LLaMA 3 70B · Respond to Webhook
 
@@ -104,6 +107,7 @@ curl -X POST http://localhost:5678/webhook/chat \
 ```
 
 ---
+<img width="1512" height="261" alt="Screenshot 2026-03-03 at 3 31 35 PM" src="https://github.com/user-attachments/assets/3cfd2b2f-09fe-48ae-aee1-a6724b0da129" />
 
 ### 3. Email Reply Agent
 
@@ -113,6 +117,7 @@ Runs every 5 hours, scans your Gmail inbox, and auto-generates personalized repl
 ```
 Every 5 Hours → Get Unread Emails (Gmail) → Craft Email Reply (GPT-4o-mini) → Parse Reply → Send Reply (Gmail)
 ```
+<img width="1064" height="612" alt="image" src="https://github.com/user-attachments/assets/9dd53da7-833d-4714-b9fe-364cfb8ed80d" />
 
 **Key nodes:** Schedule Trigger · Gmail · AI Agent · Code (JSON parser) · Gmail Send
 
@@ -121,6 +126,7 @@ Every 5 Hours → Get Unread Emails (Gmail) → Craft Email Reply (GPT-4o-mini) 
 **Note:** Activate the workflow and it runs automatically. Click **Execute workflow** to trigger manually.
 
 ---
+<img width="860" height="424" alt="image" src="https://github.com/user-attachments/assets/d9e72510-f7b0-410f-87b8-05b184824ffe" />
 
 ### 4a. RAG Vector Store Builder
 
@@ -134,6 +140,7 @@ Watch Google Drive → Download PDF → Store in Pinecone
                                          ↑
                                    Split into Chunks
 ```
+<img width="1142" height="665" alt="image" src="https://github.com/user-attachments/assets/382c67bb-d747-442c-8445-b18a94f28070" />
 
 **Key nodes:** Google Drive Trigger · Google Drive Download · Pinecone Vector Store · Document Loader · Text Splitter · OpenAI Embeddings (`text-embedding-3-small`)
 
@@ -167,6 +174,7 @@ Chat Interface → RAG Agent (GPT-4o-mini)
 3. Ask: *"What are my skills?"* or any question about documents you've uploaded
 
 ---
+<img width="1287" height="843" alt="image" src="https://github.com/user-attachments/assets/8d2eaf40-3175-4b2a-8e28-5dfc6fffae0d" />
 
 ### 5. MCP Agent
 
